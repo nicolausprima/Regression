@@ -1,0 +1,164 @@
+---
+title: "Pemodelan Kondisi Jalan di Indonesia menggunakan Regresi Linear Berganda"
+output:
+  html_document:
+    df_print: paged
+---
+
+Data diambil dari [Open Data PUPR](https://data.pu.go.id/search/type/dataset) dan [Badan Pusat Statistik](https://www.bps.go.id/id).
+
+Pemodelan ini mengambil 4 dataset dengan masing-masing data berjumlah 38 data dengan variabel yang digunakan adalah:
+
+1.  Kondisi Permukaan Jalan Kabupaten dan Kota Tahun 2023 -- (Kondisi_Baik)
+2.  PDRB per Kapita Atas Dasar HB Menurut Provinsi (Ribu), 2023 -- (Jumlah Kendaraan Bermotor - Jumlah)
+3.  Jumlah Kendaraan Bermotor Menurut Provinsi, 2023 -- (Produk Domestik Regional Bruto per Kapita HB (Rp))
+4.  Jumlah Kejadian Bencana Alam Menurut Provinsi, 2023 -- (Jumlah Bencana Alam - Banjir)
+
+Untuk Pemodelan ini yang menjadi variabel respon dan prediktornya adalah
+
+Variabel Respon :
+
+1.  Kondisi_Baik
+
+Variabel Prediktor :
+
+1.  Jumlah Kendaraan Bermotor - Jumlah
+2.  Produk Domestik Regional Bruto per Kapita HB (Rp)
+3.  Jumlah Bencana Alam - Banjir
+
+------------------------------------------------------------------------
+
+Pemodelan Kondisi Jalan di Indonesia
+
+**1. Mengimpor Data Kondisi Jalan di Indonesia dalam Format .csv**
+
+```{r}
+# Mengambil Data
+data_jalan = read.csv('~/Kondisi-Permukaan-Jalan-Kabupaten-dan-Kota-Tahun-2023_new.csv')
+
+# Menampilkan Data
+print(head(data_jalan))
+```
+**2. Melihat Tipe Data pada Data Kondisi Jalan**
+```{r}
+# Melihat Tipe Data
+print(str(data_jalan))
+```
+Dari hasil dapat dilihat variabel yang akan kita gunakan ada yang bertipe data integer oleh karena itu variabel tersebut akan diubah menjadi numeric
+
+```{r}
+# Merubah Tipe Data
+data_jalan$Jumlah.Kendaraan.Bermotor...Jumlah = as.numeric(data_jalan$Jumlah.Kendaraan.Bermotor...Jumlah)
+data_jalan$Produk.Domestik.Regional.Bruto.per.Kapita.HB..Rp. = as.numeric(data_jalan$Produk.Domestik.Regional.Bruto.per.Kapita.HB..Rp.)
+data_jalan$Jumlah.Bencana.Alam...Banjir = as.numeric(data_jalan$Jumlah.Bencana.Alam...Banjir)
+
+# Mengecek Apakah Tipe Data Sudah Berubah
+print(str(data_jalan))
+```
+Dari hasil dapat dilihat bahwa variabel yang akan kita gunakan sudah bertipe data numeric 
+
+**3. Menentukan Variabel Regresi**
+
+```{r}
+# Variabel Respon
+Y = data_jalan$Kondisi_Baik
+
+# Variabel Prediktor
+X1 = data_jalan$Jumlah.Kendaraan.Bermotor...Jumlah
+X2 = data_jalan$Produk.Domestik.Regional.Bruto.per.Kapita.HB..Rp.
+X3 = data_jalan$Jumlah.Bencana.Alam...Banjir
+```
+
+**4. Melakukan Regresi Linear Berganda**
+
+```{r}
+# Menggunakan Semua Variabel
+relation <- lm(Y~X1+X2+X3)
+print(summary(relation))
+```
+Dari pengujian pertama menggunakan semua variabel didapat: 
+
+1. P-value dari uji serentak sebesar 3.244e-11, dengan menggunakan level signifikan sebesar 5% (0.05) menunjukkan bahwa setidaknya ada satu variabel yang signfikan
+2. P-value untuk koefisen X1 dan X3 keduanya memiliki nilai dibawah level signifikan (5%) yaitu 5.58e-08 < 0.05 (X1) dan 0.00332 < 0.05 (X3) menunjukkan bahwa variabel signfikan terhadap variabel Y
+3. P-value untuk koefisien X2 memiliki nilai niatas level signifikan (5%) yaitu 0.35607 > 0.05 (X2) menunjukkan bahwa variabel tidak berpengaruh dengan variabel Y
+4. Nilai R-squared sebesar 0.7879 artinya variabilitas Kondisi_baik dapat dijelaskan oleh variabel prediktor sebesar 78.79% 
+
+Karena variabel X2 tidak signifikan dalam model, maka dicoba kembali dengan menghapus variabel X2
+```{r}
+# Tanpa Menggunakan Variabel X2
+relation <- lm(Y~X1+X3)
+print(summary(relation))
+```
+Dari pengujian kedua tanpa menggunakan variabel X2 didapat: 
+
+1. P-value dari uji serentak sebesar 5.565e-12, dengan menggunakan level signifikan sebesar 5% (0.05) menunjukkan bahwa setidaknya ada satu variabel yang signfikan
+2. P-value untuk koefisen X1 dan X3 keduanya memiliki nilai dibawah level signifikan (5%) yaitu 3.65e-08 < 0.05 (X1) dan 0.0032 < 0.05 (X3) menunjukkan bahwa variabel signfikan terhadap variabel Y
+3. P-value untuk koefisien intercept memiliki nilai di bawah level signifikan (5%) yaitu 0.0167 < 0.05 menunjukkan bahwa intercept signifikan terhadap variabel Y
+4. Nilai R-squared sebesar 0.7822 artinya variabilitas Kondisi_baik dapat dijelaskan oleh variabel prediktor sebesar 78.22% 
+
+Dari pengujian kedua dapat dilihat bahwa semua parameter signifikan terhadap model, sehingga didapat persamaan :
+
+**Y = 1.231e+03 + 5.171e-04 X1 + 4.011e+01 X3**
+
+Dari model yang didapat, dapat kita ketahui bahwa
+
+1. Konstanta sebesar 1.231e+03 artinya jika X1 (Jumlah Kendaraan Bermotor) dan X3 (Jumlah Banjir) bernilai 0, maka nilai Y (Kondisi Baik) adalah 1.231e+03
+2. Koefisien regresi variabel X1 (Jumlah Kendaraan Bermotor) sebesar 5.171e-04, artinya setiap kenaikan 1 satuan maka ada kecendrungan rata-rata variabel Y (Kondisi Baik) naik sebesar 5.171e-04
+3. Koefisien regresi variabel X3 (Jumlah Banjir) sebesar 4.011e+01, artinya setiap kenaikan 1 satuan makan ada kecendrungan rata-rata variabel Y (Kondisi Baik) naik sebesar 4.011e+01
+```{r}
+
+```
+
+
+**5. Analisa Residual**
+```{r}
+# Menyimpan Nilai Residual
+residual=resid(relation)
+```
+**(1). Uji Normalitas**
+```{r}
+# Melihat Histogram Residual
+hist(residual,main="Histogram Residual")
+```
+
+Dari Histogram terlihat bahwa
+
+1. Histogram residual tidak terdistribusi secara normal, Sebuah distribusi normal biasanya akan membentuk lonceng simetris
+2. Histogram residual memiliki panjang yang ekstrem artinya ada bar yang lebih panjang di satu sisi, yang menunjukkan ada lebih banyak residual yang jauh dari nilai rata-rata di sisi tersebut.
+```{r}
+# Uji Kolmogorov-Smirnov
+library(nortest)
+lillie.test(residual)
+```
+
+Dari Uji Kolmogorov-Smirnov didapat nilai p-value sebesar 0.02074 < 0.05 (5%) yang di mana residual tidak terdistribusi normal
+```{r}
+# QQPlot Residual
+qqnorm(residual)
+qqline(residual)
+```
+
+Dari QQPlot dapat dilihat bahwa residual tidak sepenuhnya normal meskipun terdapat kesesuaian ditengah tetapi terdapat dua nilai yang tidak sesuai (Di ujung kanan atas dan di ujung kiri bawah)
+
+**(2). Uji Keragaman Residual**
+```{r}
+# Breusch-Pagan test
+library(lmtest)
+bptest(relation,studentize=F)
+```
+
+Dari Uji keragaman residual dengan Breusch-Pagan test didapat nilai p-value sebesar 0.01001 < 0.05 (5%) yang di mana residual mempunyai variansi yang tidak konstan 
+
+
+**(3). Uji Independensi Residual**
+```{r}
+#Uji Autokorelasi (Durbin Watson)
+dwtest(relation)
+```
+Dari Hasil Uji Autokorelasi (Durbin Watson) didapat nilai p-value sebesar 0.5807 > 0.05 (5%) yang di mana tidak ada autokorelasi dari nilai residual 
+
+**6. Kesimpulan**
+
+1. Dari uji serentak dengan tingkat kepercayaan 95% dapat disimpulkan bahwa variabel X1 (Jumlah Kendaraan Bermotor) dan X3 (Jumlah Bencana - Banjir) signifikan terhadap variabel Y (Kondisi Baik)
+2. Dari uji parsial, dengan tingkat kepercayaan 95% dapat disimpulkan bahwa variabel independen yaitu X1 dan X3 memiliki pengaruh terhadap variabel dependen Y (Kondisi Baik)
+3. Pada Uji IIDN, didapat hasil dari beberapa uji yang tidak memenuhi syarat sehingga dapat mengurangi kualitas model dalam memprediksi nilai dependen (Y)
